@@ -143,6 +143,91 @@ impl BstNode {
         }
     }
 
+    pub fn tree_insert(root: &mut Option<BstNodeLink>, key: i32) {
+        match root {
+            None => {
+                *root = Some(BstNode::new_bst_nodelink(key));
+            }
+            Some(node) => {
+                let mut node_borrow = node.borrow_mut();
+                if key < node_borrow.key.unwrap() {
+                    if node_borrow.left.is_none() {
+                        let new_node = BstNode::new_bst_nodelink(key);
+                        new_node.borrow_mut().parent = Some(Rc::downgrade(node));
+                        node_borrow.left = Some(new_node);
+                    } else {
+                        drop(node_borrow); // Lepas borrow sebelum rekursi
+                        BstNode::tree_insert(&mut node.borrow_mut().left, key);
+                    }
+                } else {
+                    if node_borrow.right.is_none() {
+                        let new_node = BstNode::new_bst_nodelink(key);
+                        new_node.borrow_mut().parent = Some(Rc::downgrade(node));
+                        node_borrow.right = Some(new_node);
+                    } else {
+                        drop(node_borrow);
+                        BstNode::tree_insert(&mut node.borrow_mut().right, key);
+                    }
+                }
+            }
+        }
+    }
+    
+    
+    pub fn transplant(root: &mut Option<BstNodeLink>, u: &BstNodeLink, v: Option<BstNodeLink>) {
+        if let Some(parent_weak) = &u.borrow().parent {
+            if let Some(parent) = parent_weak.upgrade() {
+                if Rc::ptr_eq(u, parent.borrow().left.as_ref().unwrap_or(u)) {
+                    parent.borrow_mut().left = v.clone();
+                } else {
+                    parent.borrow_mut().right = v.clone();
+                }
+            }
+        } else {
+            *root = v.clone();
+        }
+    
+        if let Some(ref v_node) = v {
+            v_node.borrow_mut().parent = u.borrow().parent.clone();
+        }
+    }
+    
+
+    pub fn tree_delete(root: &mut Option<BstNodeLink>, z: &BstNodeLink) {
+        let z_left = z.borrow().left.clone();
+        let z_right = z.borrow().right.clone();
+    
+        if z_left.is_none() {
+            BstNode::transplant(root, z, z_right);
+        } else if z_right.is_none() {
+            BstNode::transplant(root, z, z_left);
+        } else {
+            let mut y = z_right.clone();
+            while let Some(ref y_node) = y {
+                if y_node.borrow().left.is_some() {
+                    let left_child = y_node.borrow().left.clone();
+                    y = left_child;
+                } else {
+                    break;
+                }
+            }
+    
+            if let Some(y_node) = y.clone() {
+                if !Rc::ptr_eq(&y_node, &z_right.as_ref().unwrap()) {
+                    let y_right = y_node.borrow().right.clone();
+                    BstNode::transplant(root, &y_node, y_right);
+                    y_node.borrow_mut().right = z_right.clone();
+                    if let Some(ref right_child) = y_node.borrow().right {
+                        right_child.borrow_mut().parent = Some(Rc::downgrade(&y_node));
+                    }
+                }
+
+                BstNode::transplant(root, z, y.clone());
+                y_node.borrow_mut().left = z_left.clone();
+            }
+        }
+    }
+    
     /**
      * Alternate simpler version of tree_successor that made use of is_nil checking
      */
