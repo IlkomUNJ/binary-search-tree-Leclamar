@@ -147,6 +147,7 @@ impl BstNode {
         match root {
             None => {
                 *root = Some(BstNode::new_bst_nodelink(key));
+                println!("Insert {} to the tree.", key);
             }
             Some(node) => {
                 let mut node_borrow = node.borrow_mut();
@@ -155,6 +156,7 @@ impl BstNode {
                         let new_node = BstNode::new_bst_nodelink(key);
                         new_node.borrow_mut().parent = Some(Rc::downgrade(node));
                         node_borrow.left = Some(new_node);
+                        println!("Insert {} to the tree.", key);
                     } else {
                         drop(node_borrow); // Lepas borrow sebelum rekursi
                         BstNode::tree_insert(&mut node.borrow_mut().left, key);
@@ -164,6 +166,7 @@ impl BstNode {
                         let new_node = BstNode::new_bst_nodelink(key);
                         new_node.borrow_mut().parent = Some(Rc::downgrade(node));
                         node_borrow.right = Some(new_node);
+                        println!("Insert {} to the tree.", key);
                     } else {
                         drop(node_borrow);
                         BstNode::tree_insert(&mut node.borrow_mut().right, key);
@@ -171,7 +174,7 @@ impl BstNode {
                 }
             }
         }
-    }
+    }    
     
     
     pub fn transplant(root: &mut Option<BstNodeLink>, u: &BstNodeLink, v: Option<BstNodeLink>) {
@@ -199,8 +202,10 @@ impl BstNode {
     
         if z_left.is_none() {
             BstNode::transplant(root, z, z_right);
+            println!("Delete {} from the tree.", z.borrow().key.unwrap());
         } else if z_right.is_none() {
             BstNode::transplant(root, z, z_left);
+            println!("Delete {} from the tree.", z.borrow().key.unwrap());
         } else {
             let mut y = z_right.clone();
             while let Some(ref y_node) = y {
@@ -221,12 +226,14 @@ impl BstNode {
                         right_child.borrow_mut().parent = Some(Rc::downgrade(&y_node));
                     }
                 }
-
+    
                 BstNode::transplant(root, z, y.clone());
                 y_node.borrow_mut().left = z_left.clone();
+                println!("Delete {} from the tree.", z.borrow().key.unwrap());
             }
         }
     }
+    
     
     /**
      * Alternate simpler version of tree_successor that made use of is_nil checking

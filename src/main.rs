@@ -66,14 +66,9 @@ fn test_binary_search_tree(){
     BstNode::tree_insert(&mut rootlink, 21);
     BstNode::tree_insert(&mut rootlink, 666);
 
-    println!("Tree structure has been modified after tree_insertions.");
-
     if let Some(root_node) = rootlink.clone() {
         BstNode::tree_delete(&mut rootlink, &root_node);
     }
-
-    println!("Tree structure has been modified after deletion.");
-
 
     //print the tree at this time
     let main_tree_path = "bst_graph.dot";
